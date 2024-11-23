@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength, Matches } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength, Matches, IsOptional } from 'class-validator';
 import { UserRole } from '../../enums/user-role.enum';
 
 export class CreateUserDto {
@@ -19,12 +19,10 @@ export class CreateUserDto {
   role: UserRole;
 
   @IsString({ message: 'First name must be a string' })
-  @IsNotEmpty({ message: 'First name is required' })
-  @MinLength(2, { message: 'First name must be at least 2 characters long' })
-  firstName: string;
+  @IsOptional()
+  firstName?: string;
 
   @IsString({ message: 'Last name must be a string' })
-  @IsNotEmpty({ message: 'Last name is required' })
-  @MinLength(2, { message: 'Last name must be at least 2 characters long' })
-  lastName: string;
+  @IsOptional()
+  lastName?: string;
 }

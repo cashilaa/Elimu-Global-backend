@@ -20,6 +20,9 @@ export class UsersService {
       email: user.email,
       password: user.password,
       role: user.role || UserRole.STUDENT,
+      firstName: user.first_name || '',
+      lastName: user.last_name || '',
+      isApproved: user.is_approved || false,
       createdAt: user.created_at,
       updatedAt: user.updated_at
     };
@@ -34,7 +37,10 @@ export class UsersService {
         {
           email: createUserDto.email,
           password: hashedPassword,
-          role: createUserDto.role || UserRole.STUDENT
+          role: createUserDto.role || UserRole.STUDENT,
+          first_name: createUserDto.firstName || '',
+          last_name: createUserDto.lastName || '',
+          is_approved: false
         }
       ])
       .select()
