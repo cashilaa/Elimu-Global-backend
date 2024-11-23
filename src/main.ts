@@ -11,8 +11,15 @@ async function bootstrap() {
   
   // Enable CORS
   app.enableCors({
-    origin: ['https://elimu-global-testing.onrender.com', 'http://localhost:5000'],
+    origin: [
+      'https://elimu-global-testing.onrender.com',
+      'https://elimu-global-api.onrender.com',
+      'http://localhost:5000',
+      'http://localhost:3000'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   // Enable validation
