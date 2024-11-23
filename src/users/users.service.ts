@@ -19,12 +19,9 @@ export class UsersService {
       id: user.id,
       email: user.email,
       password: user.password,
-      role: user.role,
-      firstName: user.firstName || user.first_name,
-      lastName: user.lastName || user.last_name,
-      isApproved: user.isApproved ?? user.is_approved ?? false,
-      createdAt: user.createdAt || user.created_at,
-      updatedAt: user.updatedAt || user.updated_at,
+      role: user.role || UserRole.STUDENT,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at
     };
   }
 
@@ -37,13 +34,8 @@ export class UsersService {
         {
           email: createUserDto.email,
           password: hashedPassword,
-          role: createUserDto.role,
-          firstName: createUserDto.firstName,
-          lastName: createUserDto.lastName,
-          isApproved: createUserDto.role === UserRole.STUDENT,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+          role: createUserDto.role || UserRole.STUDENT
+        }
       ])
       .select()
       .single();
@@ -62,7 +54,7 @@ export class UsersService {
       .eq('email', email)
       .single();
 
-    if (error) {
+    if (error || !user) {
       return null;
     }
 
@@ -76,7 +68,7 @@ export class UsersService {
       .eq('id', id)
       .single();
 
-    if (error) {
+    if (error || !user) {
       return null;
     }
 
