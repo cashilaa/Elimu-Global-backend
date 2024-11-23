@@ -43,6 +43,37 @@ export interface UserAchievement {
   progress: number;
 }
 
+export interface UserSettings {
+  theme: string;
+  language: string;
+  notifications: {
+    email: boolean;
+    push: boolean;
+    sound: boolean;
+    assignments: boolean;
+    grades: boolean;
+    announcements: boolean;
+    reminders: boolean;
+  };
+  privacy: {
+    profileVisibility: string;
+    showEmail: boolean;
+    showProgress: boolean;
+    showAchievements: boolean;
+  };
+  academic: {
+    timeZone: string;
+    dateFormat: string;
+    timeFormat: string;
+    defaultView: string;
+  };
+  accessibility: {
+    fontSize: string;
+    contrast: string;
+    animations: boolean;
+  };
+}
+
 @Injectable()
 export class StudentService {
   constructor(private readonly jwtService: JwtService) {}
@@ -246,6 +277,195 @@ export class StudentService {
       return {
         response: botResponse
       };
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async getSettings(userId: string): Promise<UserSettings> {
+    try {
+      const defaultSettings: UserSettings = {
+        theme: 'default',
+        language: 'en',
+        notifications: {
+          email: true,
+          push: true,
+          sound: true,
+          assignments: true,
+          grades: true,
+          announcements: true,
+          reminders: true
+        },
+        privacy: {
+          profileVisibility: 'private',
+          showEmail: false,
+          showProgress: false,
+          showAchievements: false
+        },
+        academic: {
+          timeZone: 'UTC',
+          dateFormat: 'MM/DD/YYYY',
+          timeFormat: '12h',
+          defaultView: 'dashboard'
+        },
+        accessibility: {
+          fontSize: 'medium',
+          contrast: 'normal',
+          animations: true
+        }
+      };
+
+      const { data: settings, error } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) throw new Error(error.message);
+
+      if (!settings) {
+        // Create default settings if none exist
+        const { data: newSettings, error: createError } = await supabase
+          .from('user_settings')
+          .insert([{ 
+            user_id: userId,
+            ...defaultSettings 
+          }])
+          .single();
+
+        if (createError) throw new Error(createError.message);
+        return defaultSettings;
+      }
+
+      // Merge existing settings with default settings to ensure all properties exist
+      return {
+        ...defaultSettings,
+        ...settings
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async updateSettings(userId: string, newSettings: Partial<UserSettings>): Promise<UserSettings> {
+    try {
+      const { data: settings, error } = await supabase
+        .from('user_settings')
+        .update({
+          theme: newSettings.theme ?? 'default',
+          language: newSettings.language ?? 'en',
+          notifications: {
+            email: newSettings.notifications?.email ?? true,
+            push: newSettings.notifications?.push ?? true,
+            sound: newSettings.notifications?.sound ?? true,
+            assignments: newSettings.notifications?.assignments ?? true,
+            grades: newSettings.notifications?.grades ?? true,
+            announcements: newSettings.notifications?.announcements ?? true,
+            reminders: newSettings.notifications?.reminders ?? true
+          },
+          privacy: {
+            profileVisibility: newSettings.privacy?.profileVisibility ?? 'private',
+            showEmail: newSettings.privacy?.showEmail ?? false,
+            showProgress: newSettings.privacy?.showProgress ?? false,
+            showAchievements: newSettings.privacy?.showAchievements ?? false
+          },
+          academic: {
+            timeZone: newSettings.academic?.timeZone ?? 'UTC',
+            dateFormat: newSettings.academic?.dateFormat ?? 'MM/DD/YYYY',
+            timeFormat: newSettings.academic?.timeFormat ?? '12h',
+            defaultView: newSettings.academic?.defaultView ?? 'dashboard'
+          },
+          accessibility: {
+            fontSize: newSettings.accessibility?.fontSize ?? 'medium',
+            contrast: newSettings.accessibility?.contrast ?? 'normal',
+            animations: newSettings.accessibility?.animations ?? true
+          }
+        })
+        .eq('user_id', userId)
+        .single();
+
+      if (error) throw new Error(error.message);
+
+      return {
+        theme: newSettings.theme ?? 'default',
+        language: newSettings.language ?? 'en',
+        notifications: {
+          email: newSettings.notifications?.email ?? true,
+          push: newSettings.notifications?.push ?? true,
+          sound: newSettings.notifications?.sound ?? true,
+          assignments: newSettings.notifications?.assignments ?? true,
+          grades: newSettings.notifications?.grades ?? true,
+          announcements: newSettings.notifications?.announcements ?? true,
+          reminders: newSettings.notifications?.reminders ?? true
+        },
+        privacy: {
+          profileVisibility: newSettings.privacy?.profileVisibility ?? 'private',
+          showEmail: newSettings.privacy?.showEmail ?? false,
+          showProgress: newSettings.privacy?.showProgress ?? false,
+          showAchievements: newSettings.privacy?.showAchievements ?? false
+        },
+        academic: {
+          timeZone: newSettings.academic?.timeZone ?? 'UTC',
+          dateFormat: newSettings.academic?.dateFormat ?? 'MM/DD/YYYY',
+          timeFormat: newSettings.academic?.timeFormat ?? '12h',
+          defaultView: newSettings.academic?.defaultView ?? 'dashboard'
+        },
+        accessibility: {
+          fontSize: newSettings.accessibility?.fontSize ?? 'medium',
+          contrast: newSettings.accessibility?.contrast ?? 'normal',
+          animations: newSettings.accessibility?.animations ?? true
+        }
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async resetSettings(userId: string): Promise<UserSettings> {
+    try {
+      const { data: settings, error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: userId,
+          theme: 'light',
+          language: 'en',
+          notifications: {
+            email: true,
+            push: true,
+            sound: false,
+            assignments: true,
+            grades: true,
+            announcements: true,
+            reminders: true
+          },
+          privacy: {
+            profileVisibility: 'public',
+            showEmail: true,
+            showProgress: true,
+            showAchievements: true
+          },
+          academic: {
+            timeZone: 'UTC',
+            dateFormat: 'MM/DD/YYYY',
+            timeFormat: '12h',
+            defaultView: 'week'
+          },
+          accessibility: {
+            fontSize: 'medium',
+            contrast: 'normal',
+            animations: true
+          }
+        })
+        .select('*')
+        .single();
+
+      if (error) throw new Error(error.message);
+
+      if (!settings) {
+        throw new NotFoundException('Settings not found');
+      }
+
+      return settings as UserSettings;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }

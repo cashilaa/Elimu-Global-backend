@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, UseGuards, Request, Body } from '@nestjs/common';
 import { StudentService } from './student.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PerformanceMetric } from './student.service';
@@ -41,5 +41,23 @@ export class StudentController {
   @Post('chatbot')
   async chatWithBot(@Request() req, @Body() body: { message: string }) {
     return this.studentService.handleChatbotMessage(req.user.id, body.message);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('settings')
+  async getSettings(@Request() req) {
+    return this.studentService.getSettings(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('settings')
+  async updateSettings(@Request() req) {
+    return this.studentService.updateSettings(req.user.id, req.body);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('settings/reset')
+  async resetSettings(@Request() req) {
+    return this.studentService.resetSettings(req.user.id);
   }
 }
