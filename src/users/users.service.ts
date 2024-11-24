@@ -42,29 +42,55 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    
-    const { data: user, error } = await this.supabase
-      .from('users')
-      .insert([
-        {
-          email: createUserDto.email,
-          password: hashedPassword,
-          role: createUserDto.role || UserRole.STUDENT,
-          first_name: createUserDto.firstName || '',
-          last_name: createUserDto.lastName || '',
-          is_approved: false
-        }
-      ])
-      .select()
-      .single();
+    try {
+      // First, create the auth user
+      const { data: authUser, error: authError } = await this.supabase.auth.admin.createUser({
+        email: createUserDto.email,
+        password: createUserDto.password,
+        email_confirm: true
+      });
 
-    if (error) {
-      console.error('Supabase error:', error);
+      if (authError) {
+        console.error('Auth user creation error:', authError);
+        throw authError;
+      }
+
+      if (!authUser.user) {
+        throw new Error('Failed to create auth user');
+      }
+
+      // Hash password for database storage
+      const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+      
+      // Then create the user profile with the auth user's ID
+      const { data: user, error: profileError } = await this.supabase
+        .from('users')
+        .insert([
+          {
+            id: authUser.user.id,
+            email: createUserDto.email,
+            password: hashedPassword,
+            role: createUserDto.role || UserRole.STUDENT,
+            first_name: createUserDto.firstName || '',
+            last_name: createUserDto.lastName || '',
+            is_approved: false
+          }
+        ])
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('User profile creation error:', profileError);
+        // Try to clean up the auth user if profile creation fails
+        await this.supabase.auth.admin.deleteUser(authUser.user.id);
+        throw profileError;
+      }
+
+      return this.mapUserResponse(user);
+    } catch (error) {
+      console.error('User creation error:', error);
       throw error;
     }
-
-    return this.mapUserResponse(user);
   }
 
   async findByEmail(email: string): Promise<User | null> {
