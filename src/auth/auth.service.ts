@@ -22,10 +22,10 @@ export class AuthService {
     return null;
   }
 
-  async validateUserById(userId: string): Promise<any> {
-    const user = await this.usersService.findById(userId);
+  async validateUserById(id: string): Promise<Omit<User, 'password'> | null> {
+    const user = await this.usersService.findById(id);
     if (!user) {
-      throw new UnauthorizedException();
+      return null;
     }
     const { password, ...result } = user;
     return result;
@@ -58,14 +58,5 @@ export class AuthService {
         isApproved: user.isApproved,
       },
     };
-  }
-
-  async validateUserById(id: string): Promise<Omit<User, 'password'> | null> {
-    const user = await this.usersService.findById(id);
-    if (!user) {
-      return null;
-    }
-    const { password, ...result } = user;
-    return result;
   }
 }

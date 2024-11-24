@@ -5,6 +5,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { User } from '../types/user.interface';
 import { UserRole } from '../enums/user-role.enum';
 import * as bcrypt from 'bcrypt';
+import { UnauthorizedException } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -67,18 +68,18 @@ export class UsersService {
     return this.mapUserResponse(user);
   }
 
-  async findById(id: string): Promise<User | null> {
+  async findById(userId: string, throwIfNotFound: boolean = false): Promise<User | null> {
     const { data: user, error } = await this.supabase
       .from('users')
       .select('*')
-      .eq('id', id)
+      .eq('id', userId)
       .single();
 
-    if (error || !user) {
-      return null;
+    if (error && throwIfNotFound) {
+      throw new UnauthorizedException('User not found');
     }
 
-    return this.mapUserResponse(user);
+    return user ? this.mapUserResponse(user) : null;
   }
 
   async approveInstructor(id: string): Promise<void> {
