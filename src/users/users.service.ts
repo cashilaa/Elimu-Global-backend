@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createSupabaseClient } from '../config/supabase.config';
+import { createClient } from '@supabase/supabase-js';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from '../types/user.interface';
 import { UserRole } from '../enums/user-role.enum';
@@ -12,7 +12,17 @@ export class UsersService {
   private supabase;
 
   constructor(private configService: ConfigService) {
-    this.supabase = createSupabaseClient(configService);
+    // Use service_role key instead of anon key
+    this.supabase = createClient(
+      this.configService.get<string>('SUPABASE_URL'),
+      this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY'),
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
   }
 
   private mapUserResponse(user: any): User {
@@ -21,11 +31,11 @@ export class UsersService {
       email: user.email,
       password: user.password,
       role: user.role || UserRole.STUDENT,
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
-      isApproved: user.isApproved || false,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt
+      firstName: user.first_name || '',
+      lastName: user.last_name || '',
+      isApproved: user.is_approved || false,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at
     };
   }
 
@@ -39,9 +49,9 @@ export class UsersService {
           email: createUserDto.email,
           password: hashedPassword,
           role: createUserDto.role || UserRole.STUDENT,
-          firstName: createUserDto.firstName || '',
-          lastName: createUserDto.lastName || '',
-          isApproved: false
+          first_name: createUserDto.firstName || '',
+          last_name: createUserDto.lastName || '',
+          is_approved: false
         }
       ])
       .select()
@@ -85,7 +95,7 @@ export class UsersService {
   async approveInstructor(id: string): Promise<void> {
     const { error } = await this.supabase
       .from('users')
-      .update({ isApproved: true })
+      .update({ is_approved: true })
       .eq('id', id);
 
     if (error) {
