@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "prebuild": "rimraf dist",
+    "prebuild": "rm -rf dist",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -55,7 +55,6 @@
     "eslint-plugin-prettier": "^5.0.0",
     "jest": "^29.5.0",
     "prettier": "^3.0.0",
-    "rimraf": "^6.0.1",
     "source-map-support": "^0.5.21",
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.0",
