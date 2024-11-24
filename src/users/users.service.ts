@@ -21,11 +21,11 @@ export class UsersService {
       email: user.email,
       password: user.password,
       role: user.role || UserRole.STUDENT,
-      firstName: user.firstname || '',
-      lastName: user.lastname || '',
-      isApproved: user.is_approved || false,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      isApproved: user.isApproved || false,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
     };
   }
 
@@ -39,9 +39,9 @@ export class UsersService {
           email: createUserDto.email,
           password: hashedPassword,
           role: createUserDto.role || UserRole.STUDENT,
-          firstname: createUserDto.firstName || '',
-          lastname: createUserDto.lastName || '',
-          is_approved: false
+          firstName: createUserDto.firstName || '',
+          lastName: createUserDto.lastName || '',
+          isApproved: false
         }
       ])
       .select()
@@ -85,7 +85,7 @@ export class UsersService {
   async approveInstructor(id: string): Promise<void> {
     const { error } = await this.supabase
       .from('users')
-      .update({ is_approved: true })
+      .update({ isApproved: true })
       .eq('id', id);
 
     if (error) {
