@@ -12,17 +12,19 @@ export class UsersService {
   private supabase;
 
   constructor(private configService: ConfigService) {
-    // Use service_role key instead of anon key
-    this.supabase = createClient(
-      this.configService.get<string>('SUPABASE_URL'),
-      this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY'),
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    const supabaseServiceRoleKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+      throw new Error('Missing Supabase configuration');
+    }
+
+    this.supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
       }
-    );
+    });
   }
 
   private mapUserResponse(user: any): User {
@@ -58,6 +60,7 @@ export class UsersService {
       .single();
 
     if (error) {
+      console.error('Supabase error:', error);
       throw error;
     }
 
