@@ -5,11 +5,17 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // Enable CORS
+  // Enable CORS with environment variables
+  const allowedOrigins = [
+    process.env.FRONTEND_URL || 'https://elimu-global-testing.onrender.com',
+    'http://localhost:5173'
+  ];
+
   app.enableCors({
-    origin: ['http://localhost:5173'], // Add your frontend URL here
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   // Enable validation
@@ -21,5 +27,6 @@ async function bootstrap() {
   const port = process.env.PORT || 3001;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
+  console.log('Allowed CORS origins:', allowedOrigins);
 }
 bootstrap();
