@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
+import fetch from 'cross-fetch';
 
 @Injectable()
 export class SupabaseService implements OnModuleInit {
@@ -22,6 +23,9 @@ export class SupabaseService implements OnModuleInit {
           autoRefreshToken: true,
           persistSession: true,
         },
+        global: {
+          fetch: fetch,
+        },
       });
       this.logger.log('Supabase client initialized successfully');
     } catch (error) {
@@ -32,13 +36,24 @@ export class SupabaseService implements OnModuleInit {
 
   async onModuleInit() {
     try {
-      // Test the connection
-      const { data, error } = await this.supabase.from('users').select('count').limit(1);
-      if (error) throw error;
+      // Test the connection with a simple health check
+      const { error } = await this.supabase.from('users').select('count', { count: 'exact', head: true });
+      
+      if (error) {
+        this.logger.error('Failed to connect to Supabase:', error);
+        throw error;
+      }
+      
       this.logger.log('Successfully connected to Supabase');
     } catch (error) {
-      this.logger.error('Failed to connect to Supabase:', error);
-      throw error;
+      this.logger.error('Failed to connect to Supabase:', { 
+        message: error.message,
+        details: error.stack,
+        hint: error.hint || '',
+        code: error.code || ''
+      });
+      // Don't throw the error here, just log it
+      this.logger.warn('Continuing application startup despite Supabase connection issue');
     }
   }
 
