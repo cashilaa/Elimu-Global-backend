@@ -19,13 +19,22 @@ export class SupabaseService implements OnModuleInit {
       throw new Error('Supabase credentials are required');
     }
 
+    // Log connection details (without sensitive info)
+    this.logger.log(`Attempting to connect to Supabase at: ${supabaseUrl}`);
+
     // Ensure URL format is correct
-    const formattedUrl = supabaseUrl.endsWith('/')
-      ? supabaseUrl.slice(0, -1)
-      : supabaseUrl;
+    try {
+      const url = new URL(supabaseUrl);
+      if (!url.protocol.startsWith('https')) {
+        throw new Error('Supabase URL must use HTTPS protocol');
+      }
+    } catch (error) {
+      this.logger.error('Invalid Supabase URL format:', error.message);
+      throw error;
+    }
 
     try {
-      this.supabase = createClient(formattedUrl, supabaseKey, {
+      this.supabase = createClient(supabaseUrl, supabaseKey, {
         auth: {
           autoRefreshToken: true,
           persistSession: true,
@@ -37,6 +46,9 @@ export class SupabaseService implements OnModuleInit {
             'apikey': supabaseKey,
           },
         },
+        db: {
+          schema: 'public',
+        },
       });
       this.logger.log('Supabase client initialized successfully');
     } catch (error) {
@@ -45,12 +57,21 @@ export class SupabaseService implements OnModuleInit {
     }
   }
 
-  private delay(ms: number): Promise<void> {
+  private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   private async testConnection(attempt: number = 1): Promise<boolean> {
     try {
+      this.logger.log(`Testing connection (Attempt ${attempt}/${this.maxRetries})`);
+      
+      // First, test basic connectivity
+      const { data, error: healthError } = await this.supabase.rpc('get_status');
+      if (healthError) {
+        throw new Error(`Health check failed: ${healthError.message}`);
+      }
+
+      // Then try a simple query
       const { error } = await this.supabase
         .from('users')
         .select('count', { count: 'exact', head: true });
@@ -64,7 +85,12 @@ export class SupabaseService implements OnModuleInit {
     } catch (error) {
       this.logger.warn(
         `Connection attempt ${attempt}/${this.maxRetries} failed:`,
-        error.message
+        {
+          error: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        }
       );
 
       if (attempt < this.maxRetries) {
