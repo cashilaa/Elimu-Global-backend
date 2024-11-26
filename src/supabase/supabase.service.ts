@@ -65,13 +65,7 @@ export class SupabaseService implements OnModuleInit {
     try {
       this.logger.log(`Testing connection (Attempt ${attempt}/${this.maxRetries})`);
       
-      // First, test basic connectivity
-      const { data, error: healthError } = await this.supabase.rpc('get_status');
-      if (healthError) {
-        throw new Error(`Health check failed: ${healthError.message}`);
-      }
-
-      // Then try a simple query
+      // Try a simple query to test connection
       const { error } = await this.supabase
         .from('users')
         .select('count', { count: 'exact', head: true });
@@ -83,15 +77,9 @@ export class SupabaseService implements OnModuleInit {
       this.logger.log('Successfully connected to Supabase');
       return true;
     } catch (error) {
-      this.logger.warn(
-        `Connection attempt ${attempt}/${this.maxRetries} failed:`,
-        {
-          error: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint
-        }
-      );
+      this.logger.warn(`Connection attempt ${attempt}/${this.maxRetries} failed:`, {
+        error: error.message || '',
+      });
 
       if (attempt < this.maxRetries) {
         this.logger.log(`Retrying in ${this.retryDelay / 1000} seconds...`);
