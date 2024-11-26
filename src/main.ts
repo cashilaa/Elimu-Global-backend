@@ -2,6 +2,10 @@ import 'cross-fetch/polyfill';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import * as dns from 'dns';
+
+// Configure DNS resolution
+dns.setDefaultResultOrder('ipv4first');
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -44,6 +48,16 @@ async function bootstrap() {
     await app.listen(port);
     logger.log(`Application is running on: http://localhost:${port}`);
     logger.log('Allowed CORS origins:', allowedOrigins);
+
+    // Test DNS resolution
+    try {
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const hostname = new URL(supabaseUrl).hostname;
+      const addresses = await dns.promises.resolve4(hostname);
+      logger.log(`Supabase DNS resolution successful. IP addresses: ${addresses.join(', ')}`);
+    } catch (error) {
+      logger.error('DNS resolution failed:', error);
+    }
   } catch (error) {
     logger.error('Failed to start application:', error);
     process.exit(1);

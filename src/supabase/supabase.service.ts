@@ -7,6 +7,8 @@ import fetch from 'cross-fetch';
 export class SupabaseService implements OnModuleInit {
   private supabase: SupabaseClient;
   private readonly logger = new Logger(SupabaseService.name);
+  private readonly maxRetries = 3;
+  private readonly retryDelay = 2000; // 2 seconds
 
   constructor(private configService: ConfigService) {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
@@ -17,14 +19,23 @@ export class SupabaseService implements OnModuleInit {
       throw new Error('Supabase credentials are required');
     }
 
+    // Ensure URL format is correct
+    const formattedUrl = supabaseUrl.endsWith('/')
+      ? supabaseUrl.slice(0, -1)
+      : supabaseUrl;
+
     try {
-      this.supabase = createClient(supabaseUrl, supabaseKey, {
+      this.supabase = createClient(formattedUrl, supabaseKey, {
         auth: {
           autoRefreshToken: true,
           persistSession: true,
         },
         global: {
           fetch: fetch,
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseKey,
+          },
         },
       });
       this.logger.log('Supabase client initialized successfully');
@@ -34,25 +45,55 @@ export class SupabaseService implements OnModuleInit {
     }
   }
 
-  async onModuleInit() {
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private async testConnection(attempt: number = 1): Promise<boolean> {
     try {
-      // Test the connection with a simple health check
-      const { error } = await this.supabase.from('users').select('count', { count: 'exact', head: true });
-      
+      const { error } = await this.supabase
+        .from('users')
+        .select('count', { count: 'exact', head: true });
+
       if (error) {
-        this.logger.error('Failed to connect to Supabase:', error);
         throw error;
       }
-      
+
       this.logger.log('Successfully connected to Supabase');
+      return true;
     } catch (error) {
-      this.logger.error('Failed to connect to Supabase:', { 
+      this.logger.warn(
+        `Connection attempt ${attempt}/${this.maxRetries} failed:`,
+        error.message
+      );
+
+      if (attempt < this.maxRetries) {
+        this.logger.log(`Retrying in ${this.retryDelay / 1000} seconds...`);
+        await this.delay(this.retryDelay);
+        return this.testConnection(attempt + 1);
+      }
+
+      return false;
+    }
+  }
+
+  async onModuleInit() {
+    try {
+      const isConnected = await this.testConnection();
+      
+      if (!isConnected) {
+        this.logger.error('Failed to establish Supabase connection after maximum retries');
+        // Don't throw error, allow the application to start
+        this.logger.warn('Application will start but database functionality may be limited');
+      }
+    } catch (error) {
+      this.logger.error('Error during Supabase initialization:', {
         message: error.message,
         details: error.stack,
         hint: error.hint || '',
         code: error.code || ''
       });
-      // Don't throw the error here, just log it
+      // Continue application startup
       this.logger.warn('Continuing application startup despite Supabase connection issue');
     }
   }
