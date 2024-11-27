@@ -11,7 +11,11 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     
     console.log('Configuring CORS...');
-    app.enableCors();
+    app.enableCors({
+      origin: '*', // Update this with your frontend URL in production
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+      credentials: true,
+    });
 
     console.log('Setting up global pipes, filters, and interceptors...');
     app.useGlobalPipes(new ValidationPipe());
@@ -29,22 +33,12 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, document);
 
-    const port = process.env.PORT || 3000;
+    const port = process.env.PORT || 3001;
     
-    // Check if port is available
-    const server = await app.listen(port);
-    console.log(`Application is running on: http://localhost:${port}`);
-    console.log(`Swagger documentation available at: http://localhost:${port}/api`);
-
-    // Handle server errors
-    server.on('error', (error) => {
-      if (error.code === 'EADDRINUSE') {
-        console.error(`Port ${port} is already in use. Please choose a different port.`);
-        process.exit(1);
-      } else {
-        console.error('Server error:', error);
-      }
-    });
+    await app.listen(port, '0.0.0.0');
+    console.log(`Application is running on: ${await app.getUrl()}`);
+    console.log(`Swagger documentation available at: ${await app.getUrl()}/api`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
 
   } catch (error) {
     console.error('Error starting the application:', error);
