@@ -30,8 +30,8 @@ A comprehensive backend system for an educational platform built with NestJS and
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/cashilaa/Elimu-Global-backed.git
-cd Elimu-Global-backed
+git clone https://github.com/cashilaa/Elimu-Global-backend.git
+cd Elimu-Global-backend
 ```
 
 2. Install dependencies:
