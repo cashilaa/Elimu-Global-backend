@@ -14,8 +14,8 @@ async function bootstrap() {
     const allowedOrigins = [
       'http://localhost:5000',                      // Local development
       'https://localhost:5000',                     // Local development with HTTPS
-      'https://elimu-global-api.onrender.com',      // Production frontend
-      'http://elimu-global-api.onrender.com'        // Production frontend without HTTPS
+      'https://elimu-global-testing.onrender.com',      // Production frontend
+      'http://elimu-global-testing.onrender.com'        // Production frontend without HTTPS
     ];
 
     console.log('Configuring CORS with allowed origins:', allowedOrigins);
