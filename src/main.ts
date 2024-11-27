@@ -10,11 +10,32 @@ async function bootstrap() {
     console.log('Starting NestJS application...');
     const app = await NestFactory.create(AppModule);
     
-    console.log('Configuring CORS...');
+    // Define allowed origins
+    const allowedOrigins = [
+      'http://localhost:5000',              // Local development
+      'https://localhost:5000',             // Local development with HTTPS
+      'https://elimu-global.vercel.app',    // Production frontend
+      'http://elimu-global.vercel.app'      // Production frontend without HTTPS
+    ];
+
+    console.log('Configuring CORS with allowed origins:', allowedOrigins);
     app.enableCors({
-      origin: '*', // Update this with your frontend URL in production
-      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+          callback(null, true);
+        } else {
+          console.warn(`Blocked request from unauthorized origin: ${origin}`);
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
       credentials: true,
+      allowedHeaders: 'Origin,X-Requested-With,Content-Type,Accept,Authorization,Access-Control-Allow-Credentials',
+      exposedHeaders: 'Content-Range,X-Content-Range',
+      maxAge: 3600
     });
 
     console.log('Setting up global pipes, filters, and interceptors...');
@@ -39,6 +60,7 @@ async function bootstrap() {
     console.log(`Application is running on: ${await app.getUrl()}`);
     console.log(`Swagger documentation available at: ${await app.getUrl()}/api`);
     console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log('CORS configuration is active for the following origins:', allowedOrigins);
 
   } catch (error) {
     console.error('Error starting the application:', error);
