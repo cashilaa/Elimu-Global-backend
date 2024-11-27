@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CoursesModule } from './modules/courses/courses.module';
 import { StudentsModule } from './modules/students/students.module';
+import { TeachersModule } from './modules/teachers/teachers.module';
 
 @Module({
   imports: [
@@ -16,23 +17,13 @@ import { StudentsModule } from './modules/students/students.module';
         console.log('Attempting to connect to MongoDB with URI:', uri);
         return {
           uri,
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
-          connectionFactory: (connection) => {
-            connection.on('connected', () => {
-              console.log('Successfully connected to MongoDB Atlas');
-            });
-            connection.on('error', (error) => {
-              console.error('MongoDB connection error:', error);
-            });
-            return connection;
-          },
         };
       },
       inject: [ConfigService],
     }),
     CoursesModule,
     StudentsModule,
+    TeachersModule,
   ],
   controllers: [],
   providers: [],
