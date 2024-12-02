@@ -69,7 +69,7 @@ export class StudentsService {
     }
 
     if (!student.progress) {
-      student.progress = {};
+      student.progress = [];
     }
 
     student.progress[courseId] = {
@@ -88,5 +88,113 @@ export class StudentsService {
     }
 
     return student.progress?.[courseId] || null;
+  }
+
+  async unenrollFromCourse(studentId: string, courseId: string): Promise<Student> {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException(`Student with ID "${studentId}" not found`);
+    }
+    student.enrolledCourses = student.enrolledCourses.filter(id => id !== courseId);
+    return student.save();
+  }
+
+  async getEnrolledCourses(studentId: string): Promise<string[]> {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException(`Student with ID "${studentId}" not found`);
+    }
+    return student.enrolledCourses;
+  }
+
+  async getCertificates(studentId: string): Promise<any[]> {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException(`Student with ID "${studentId}" not found`);
+    }
+    return student.certificates || [];
+  }
+
+  async getAchievements(studentId: string): Promise<any[]> {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException(`Student with ID "${studentId}" not found`);
+    }
+    return student.achievements || [];
+  }
+
+  async getAnalytics(studentId: string, timeframe: string): Promise<any> {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException(`Student with ID "${studentId}" not found`);
+    }
+    // Implement analytics logic based on timeframe
+    return {};
+  }
+
+  async updatePreferences(studentId: string, preferences: any): Promise<Student> {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException(`Student with ID "${studentId}" not found`);
+    }
+    student.preferences = { ...student.preferences, ...preferences };
+    return student.save();
+  }
+
+  async getNotifications(studentId: string, status?: string): Promise<any[]> {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException(`Student with ID "${studentId}" not found`);
+    }
+    return student.notifications || [];
+  }
+
+  async markNotificationAsRead(studentId: string, notificationId: string): Promise<void> {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException(`Student with ID "${studentId}" not found`);
+    }
+    // Implement notification status update logic
+  }
+
+  async getSchedule(studentId: string, startDate: Date, endDate: Date): Promise<any[]> {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException(`Student with ID "${studentId}" not found`);
+    }
+    // Implement schedule retrieval logic
+    return [];
+  }
+
+  async getMeetings(studentId: string, status?: string): Promise<any[]> {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException(`Student with ID "${studentId}" not found`);
+    }
+    return student.meetings || [];
+  }
+
+  async joinMeeting(studentId: string, meetingId: string): Promise<void> {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException(`Student with ID "${studentId}" not found`);
+    }
+    // Implement meeting join logic
+  }
+
+  async getPaymentHistory(studentId: string): Promise<any[]> {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException(`Student with ID "${studentId}" not found`);
+    }
+    return student.paymentHistory || [];
+  }
+
+  async getSubscriptions(studentId: string): Promise<any[]> {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException(`Student with ID "${studentId}" not found`);
+    }
+    return student.subscriptions || [];
   }
 }
