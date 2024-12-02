@@ -75,7 +75,7 @@ All API endpoints require Bearer token authentication.
 
 #### Base URL
 ```
-https://api.elimuglobal.com
+http://localhost:3002
 ```
 
 #### API Endpoints
